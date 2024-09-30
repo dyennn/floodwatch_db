@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sensors', function (Blueprint $table) {
-            $table->bigIncrements('sensor_id');
+            $table->bigIncrements('water_level_id');
             $table->decimal('water_level', 8, 2); 
             $table->date('date_recorded');
             $table->time('time_recorded');
+            $table->string('location');
         });
     }
 

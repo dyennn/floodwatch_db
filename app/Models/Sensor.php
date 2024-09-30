@@ -15,5 +15,6 @@ class Sensor extends Model
         'water_level',
         'date_recorded',
         'time_recorded',
+        'location'
     ];
 }
