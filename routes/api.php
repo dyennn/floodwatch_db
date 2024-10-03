@@ -6,12 +6,16 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\SensorController;
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('posts', PostController::class);
+// Routes for managing posts
+Route::apiResource('posts', PostController::class); // Provides RESTful API routes for posts
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Authentication routes
+Route::post('/register', [AuthController::class, 'register']); // User registration
+Route::post('/login', [AuthController::class, 'login']); // User login
 
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+// Logout route, requires authentication
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // User logout
 
-Route::post('/post-water-level', [SensorController::class, 'postWaterLevel']);
-Route::get('/get-all-sensors', [SensorController::class, 'getAllSensors']);
+// Sensor data routes
+Route::post('/post-water-level', [SensorController::class, 'postWaterLevel']); // Post water level data
+Route::get('/get-all-sensors', [SensorController::class, 'getAllSensors']); // Get all sensor data
