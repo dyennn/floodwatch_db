@@ -15,15 +15,15 @@ class SensorController extends Controller
         // Validate the incoming request data
         $validatedData = $request->validate([
             'waterLevel' => 'required|numeric',
-            'location' => 'required|string',
+            'street_name' => 'required|string',
         ]);
     
         // Create a new WaterLevel instance and save it to the database
         Sensor::create([
             'water_level' => $validatedData['waterLevel'],
-            'date_recorded' => now()->toDateString(),
-            'time_recorded' => now()->format('H:i:s'),
-            'location' => $validatedData['location']
+            'date' => now()->toDateString(),
+            'time' => now()->format('H:i:s'),
+            'street_name' => $validatedData['street_name']
         ]);
 
         // Return a success response
