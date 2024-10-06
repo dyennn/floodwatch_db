@@ -25,6 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        // delete if exists
+        Schema::dropIfExists('sensors');
     }
 }; 

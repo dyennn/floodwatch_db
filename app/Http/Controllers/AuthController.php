@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -20,7 +22,8 @@ class AuthController extends Controller
                     'required',
                     'email',
                     'unique:users',
-                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com)$/'
+                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com
+                    phinmaed.com)$/'
                 ],
                 'password' => [
                     'required',
@@ -36,7 +39,7 @@ class AuthController extends Controller
             $user = User::create($fields); // Create new user record
 
 
-            return [ // Return the user and token
+            return [ // Return the user
                 'user' => $user,
             ];
         } catch (\Illuminate\Validation\ValidationException $e) { // Catch validation errors
@@ -125,5 +128,90 @@ class AuthController extends Controller
         return [
             'message' => 'You are logged out.'
         ];
+    }
+
+    public function profile(Request $request){ 
+        return $request->user();
+    }
+
+    public function update(Request $request){ // Update user profile
+        $user = Auth::user(); // Get the authenticated user
+
+        $fields = $request->validate([
+            'name' => 'nullable|max:25|min:6|string',            
+            'phone_number' => 'nullable|numeric|digits:11|unique:users,phone_number,' . $request->user()->id,
+            'address' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|in:male,female,other',
+        ]);
+
+        // Validate email if present in the request
+        if ($request->has('email')) {
+            $request->validate([
+                'email' => [
+                    'required',
+                    'email',
+                    'unique:users,email,' . $user->id,
+                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com
+                    phinmaed.com)$/'
+                ]
+            ]);
+
+            // Update the user email
+            $user->update([
+                'email' => $request->input('email')
+            ]);
+        }
+
+        // Validate password if present in the request
+        if ($request->has('current_password') && $request->has('password') && $request->has('password_confirmation')) {
+            $request->validate([
+                'current_password' => 'required|string',
+                'password' => ['required|string|min:8|confirmed', 
+                'regex:/[A-Z]/', // must contain at least one uppercase letter
+                'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
+            ]
+            ]);
+
+            // Check if the current password matches
+            if (!Hash::check($request->input('current_password'), $user->password)) {
+                return response()->json(['message' => 'Current password is incorrect'], 400);
+            }
+
+            // Update the user password
+            $user->update([
+                'password' => Hash::make($request->input('password'))
+            ]);
+        }
+
+        $user = $request->user(); // Get the authenticated user
+        // Update the user record
+        $user->update([
+            'name' => $fields['name'],
+            'phone_number' => $fields['phone_number'],
+            'address' => $fields['address'],
+            'gender' => $fields['gender'],
+            'updated_at' => now()
+        ]);
+
+        return [
+            'message' => 'Profile updated successfully.',
+            'user' => $user,
+
+        ];
+    }
+
+    public function delete(Request $request){ // Delete user account
+        $user = $request->user(); // Get the authenticated user
+        $user->delete(); // Delete the user record
+
+        return [
+            'message' => 'User account deleted successfully.'
+        ];
+    }
+
+    public function show(Request $request){ // Show user information
+        $user = $request->user(); // Get the authenticated user
+
+        return $user;
     }
 }
