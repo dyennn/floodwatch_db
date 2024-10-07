@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 class AuthController extends Controller
 {
@@ -38,9 +40,11 @@ class AuthController extends Controller
 
             $user = User::create($fields); // Create new user record
 
+            event(new Registered($user)); // Fire the registered event
 
             return [ // Return the user
                 'user' => $user,
+                'message' => 'User registered successfully. Please check your email for verification link.',
             ];
         } catch (\Illuminate\Validation\ValidationException $e) { // Catch validation errors
             $errors = $e->validator->errors()->toArray();
