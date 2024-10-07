@@ -9,18 +9,18 @@ use Illuminate\Http\Request; // Import the Request class
 class SensorController extends Controller
 {
 
-    public function postWaterLevel(Request $request)
+    public function post_water_level(Request $request)
     {
         
         // Validate the incoming request data
         $validatedData = $request->validate([
-            'waterLevel' => 'required|numeric',
+            'water_level' => 'required|numeric',
             'street_name' => 'required|string',
         ]);
     
         // Create a new WaterLevel instance and save it to the database
         Sensor::create([
-            'water_level' => $validatedData['waterLevel'],
+            'water_level' => $validatedData['water_level'],
             'date' => now()->toDateString(),
             'time' => now()->format('H:i:s'),
             'street_name' => $validatedData['street_name']
@@ -33,7 +33,7 @@ class SensorController extends Controller
     }
 
 
-    public function getAllSensors()
+    public function get_all_sensors()
     {
         // Fetch all sensor data
         $sensors = Sensor::all();
