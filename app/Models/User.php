@@ -9,8 +9,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Auth\Events\Registered;
 use App\Notifications\CustomVerifyEmail;
+use Illuminate\Contracts\Auth\CanResetPassword;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -40,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];  
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast to native types.
      *
      * @return array<string, string>
      */
@@ -52,15 +53,17 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-        /**
+    /**
      * Get the profile associated with the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function profile()
     {
         return $this->hasOne(Profile::class);
     }
 
-        /**
+    /**
      * Send the email verification notification.
      *
      * @return void
