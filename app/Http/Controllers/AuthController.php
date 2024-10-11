@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -25,7 +27,7 @@ class AuthController extends Controller
                     'email',
                     'unique:users',
                     'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com
-                    phinmaed.com)$/'
+                    phinmaed.com|example.com)$/'
                 ],
                 'password' => [
                     'required',
@@ -141,6 +143,7 @@ class AuthController extends Controller
     public function update(Request $request){ // Update user profile
         $user = Auth::user(); // Get the authenticated user
 
+        // Validate name, phone_number, address, 
         $fields = $request->validate([
             'name' => 'nullable|max:25|min:6|string',            
             'phone_number' => 'nullable|numeric|digits:11|unique:users,phone_number,' . $request->user()->id,
@@ -155,8 +158,7 @@ class AuthController extends Controller
                     'required',
                     'email',
                     'unique:users,email,' . $user->id,
-                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com
-                    phinmaed.com)$/'
+                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com|phinmaed\.com|example.com)$/'
                 ]
             ]);
 
@@ -169,11 +171,15 @@ class AuthController extends Controller
         // Validate password if present in the request
         if ($request->has('current_password') && $request->has('password') && $request->has('password_confirmation')) {
             $request->validate([
-                'current_password' => 'required|string',
-                'password' => ['required|string|min:8|confirmed', 
-                'regex:/[A-Z]/', // must contain at least one uppercase letter
-                'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
-            ]
+                'current_password' => 'required|string|min:8',
+                'password' => [
+                    'required',
+                    'string',
+                    'min:8',
+                    'confirmed',
+                    'regex:/[A-Z]/', // must contain at least one uppercase letter
+                    'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
+                ]
             ]);
 
             // Check if the current password matches
@@ -187,7 +193,6 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = $request->user(); // Get the authenticated user
         // Update the user record
         $user->update([
             'name' => $fields['name'],
@@ -197,7 +202,7 @@ class AuthController extends Controller
             'updated_at' => now()
         ]);
 
-        return [
+        return [ // Return the updated user
             'message' => 'Profile updated successfully.',
             'user' => $user,
 
