@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SensorController;
+use App\Http\Controllers\EmailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -28,23 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::put('/profile', [AuthController::class, 'update']); // Update user profile
   Route::delete('/profile', [AuthController::class, 'delete']); // Delete user profile
   Route::get('/profile', [AuthController::class, 'show']); // Show user profile
-});
-
-// Email verification routes
-Route::middleware('auth:sanctum')->group(function () {
-  Route::get('/email/verify', function () {
-    return response()->json(['message' => 'Please verify your email address.']);
-  })->name('verification.notice');
-
-  Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return response()->json(['message' => 'Email verified successfully.']);
-  })->middleware('signed')->name('verification.verify');
-
-  Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return response()->json(['message' => 'Verification link sent!']);
-  })->middleware('throttle:6,1')->name('verification.send');
 });
 
 // Password reset routes
@@ -84,3 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
       : response()->json(['message' => 'Unable to reset password.'], 500);
   });
 });
+
+// Email verification routes
+Route::middleware('auth:sanctum')->post('/send-verification-code', [EmailController::class, 'sendVerificationCode']);
+Route::middleware('auth:sanctum')->post('/verify-email', [EmailController::class, 'verifyEmail']);

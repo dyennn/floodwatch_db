@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->string('profile_image')->nullable();
             $table->rememberToken();
+            $table->string('verification_code')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
