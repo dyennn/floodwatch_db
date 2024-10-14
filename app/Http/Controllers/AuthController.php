@@ -12,9 +12,11 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
+// AuthController class to handle user authentication
 class AuthController extends Controller
 {
-    public function register(Request $request){ // Function to register a new user
+    // Register function
+    public function register(Request $request){ 
         try {
             $fields = $request->validate([
                 'name' => [
@@ -42,12 +44,9 @@ class AuthController extends Controller
 
             $user = User::create($fields); // Create new user record
 
-            event(new Registered($user)); // Fire the registered event
-
             return [ // Return the user
                 'user' => $user,
-                'message' => 'User registered successfully. Please check your email for verification link.',
-            ];
+                'message' => 'User registered successfully.'];
         } catch (\Illuminate\Validation\ValidationException $e) { // Catch validation errors
             $errors = $e->validator->errors()->toArray();
             $response = [
@@ -94,6 +93,7 @@ class AuthController extends Controller
         }
     }
 
+    // Login function
     public function login(Request $request){ // Login function
         try{ 
             $request->validate([
@@ -128,6 +128,7 @@ class AuthController extends Controller
         }
     }
 
+    // Logout function
     public function logout(Request $request){
         $request->user()->tokens()->delete();
         
@@ -136,11 +137,13 @@ class AuthController extends Controller
         ];
     }
 
+    // Get authenticated user
     public function profile(Request $request){ 
-        return $request->user();
+        return $request->user(); 
     }
 
-    public function update(Request $request){ // Update user profile
+    // Update user profile function
+    public function update(Request $request){ 
         $user = Auth::user(); // Get the authenticated user
 
         // Validate name, phone_number, address, 
@@ -209,7 +212,8 @@ class AuthController extends Controller
         ];
     }
 
-    public function delete(Request $request){ // Delete user account
+    // Delete user account
+    public function delete(Request $request){ 
         $user = $request->user(); // Get the authenticated user
         $user->delete(); // Delete the user record
 
@@ -218,7 +222,8 @@ class AuthController extends Controller
         ];
     }
 
-    public function show(Request $request){ // Show user information
+    // Shows user information
+    public function show(Request $request){
         $user = $request->user(); // Get the authenticated user
 
         return $user;

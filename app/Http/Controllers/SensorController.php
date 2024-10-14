@@ -6,6 +6,7 @@ use App\Models\Sensor; // Ensure that the Sensor model exists in the App\Models 
 use Illuminate\Routing\Controller; // Import the Controller class
 use Illuminate\Http\Request; // Import the Request class
 
+// SensorController class to handle sensor data
 class SensorController extends Controller
 {
 
