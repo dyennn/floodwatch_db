@@ -16,11 +16,13 @@ class VerifyEmail extends Mailable
 
     public $code;
 
+    // Constructor to set the verification code
     public function __construct($code)
     {
         $this->code = $code;
     }
     
+    // Build the message to be sent to the user.
     public function build()
     {
         return $this->view('emails.verify')->with('code', $this->code);

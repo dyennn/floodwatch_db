@@ -13,7 +13,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 // AuthController class to handle user authentication
 class AuthController extends Controller
 {
-    public function register(Request $request){ // Function to register a new user
+    // Register function
+    public function register(Request $request){ 
         try {
             $fields = $request->validate([
                 'name' => [
@@ -90,6 +91,7 @@ class AuthController extends Controller
         }
     }
 
+    // Login function
     public function login(Request $request){ // Login function
         try{ 
             $request->validate([
@@ -124,6 +126,7 @@ class AuthController extends Controller
         }
     }
 
+    // Logout function
     public function logout(Request $request){
         $request->user()->tokens()->delete();
         
@@ -132,11 +135,13 @@ class AuthController extends Controller
         ];
     }
 
+    // Get authenticated user
     public function profile(Request $request){ 
-        return $request->user();
+        return $request->user(); 
     }
 
-    public function update(Request $request){ // Update user profile
+    // Update user profile function
+    public function update(Request $request){ 
         $user = Auth::user(); // Get the authenticated user
 
         $fields = $request->validate([
@@ -202,7 +207,8 @@ class AuthController extends Controller
         ];
     }
 
-    public function delete(Request $request){ // Delete user account
+    // Delete user account
+    public function delete(Request $request){ 
         $user = $request->user(); // Get the authenticated user
         $user->delete(); // Delete the user record
 
@@ -211,7 +217,8 @@ class AuthController extends Controller
         ];
     }
 
-    public function show(Request $request){ // Show user information
+    // Shows user information
+    public function show(Request $request){
         $user = $request->user(); // Get the authenticated user
 
         return $user;
