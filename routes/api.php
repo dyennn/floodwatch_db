@@ -3,13 +3,13 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SensorController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EmailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use App\Models\User;
 
 // Routes for managing posts
@@ -68,6 +68,12 @@ Route::middleware('auth:sanctum')->group(function () {
       : response()->json(['message' => 'Unable to reset password.'], 500);
   });
 });
+
+// Profile image upload route
+Route::post('/profile/upload', [ProfileController::class, 'uploadProfileImage'])->middleware('auth:sanctum');
+
+// Get profile route
+Route::get('/profile', [ProfileController::class, 'getProfile'])->middleware('auth:sanctum');
 
 // Email verification routes
 Route::middleware('auth:sanctum')->post('/send-verification-code', [EmailController::class, 'sendVerificationCode']);
