@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+// VerifyEmail class to send email verification code
 class VerifyEmail extends Mailable
 {
     use Queueable, SerializesModels;

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
+// AuthController class to handle user authentication
 class AuthController extends Controller
 {
     public function register(Request $request){ // Function to register a new user
