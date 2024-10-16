@@ -50,7 +50,7 @@
 
         <p>If you didn't request this, you can safely ignore this email.</p>
         <p>Thanks,</p>
-        <p>Your App Team</p>
+        <p>FloodWatch Team</p>
 
         <div class="footer">
             <p>If you have any issues, feel free to contact us at mama.aquino.up@phinmaed.com</p>
