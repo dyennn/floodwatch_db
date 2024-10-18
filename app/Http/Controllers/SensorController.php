@@ -33,10 +33,16 @@ class SensorController extends Controller
     }
 
 
-    public function getAllSensors()
+    public function get_all_water_level()
     {
         // Fetch all sensor data
         $sensors = Sensor::all();
+
+        // Check if there is any data
+        if ($sensors->isEmpty()) {
+            // Return a message if no data is found
+            return response()->json(['message' => 'No water level data found']);
+        }
 
         // Return the sensor data as a JSON response
         return response()->json($sensors);

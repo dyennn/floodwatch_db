@@ -23,7 +23,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 
 // Sensor data routes
 Route::post('/post-water-level', [SensorController::class, 'post_water_level']); // Post water level data
-Route::get('/get-all-sensors', [SensorController::class, 'get_all_sensors']); // Get all sensor data
+Route::get('/get-all-water-level', [SensorController::class, 'get_all_water_level']); // Get all sensor data
 
 // Profile routes
 Route::middleware('auth:sanctum')->group(function () {
