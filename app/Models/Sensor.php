@@ -10,9 +10,9 @@ class Sensor extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'water_level',
+        'street_name',
         'date',
         'time',
-        'street_name'
+        'water_level'
     ];
 }

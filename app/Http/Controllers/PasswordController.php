@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Str;
 
 class PasswordController extends Controller
 {
@@ -38,7 +39,11 @@ class PasswordController extends Controller
         Mail::to($user->email)->send(new ResetPasswordMail($resetPasswordCode));
 
         // Return success response if reset password code is sent
-        return response()->json(['message' => 'Reset password code sent.']);
+        return [
+            'message' => 'Reset password code sent to your email.',
+            'email' => $user->email
+
+        ];
     }
 
     // Verify reset password code
@@ -61,17 +66,27 @@ class PasswordController extends Controller
             return response()->json(['message' => 'Invalid or expired reset password code.'], 400);
         }
 
-        // Return success response if reset password code is verified
-        return response()->json(['message' => 'Reset password code verified.']);
+        // Generate a token
+        $token = Str::random(60);
+
+        // Hash the token before storing it
+        $hashedToken = Hash::make($token);
+
+        // Store the hashed token in the database with an expiry time (e.g., 15 minutes)
+        $user->reset_password_token = $hashedToken;
+        $user->reset_password_token_expires_at = Carbon::now()->addMinutes(15);
+        $user->save();
+
+        // Return success response with the plain token
+        return response()->json(['message' => 'Reset password code verified.', 'token' => $token]);
     }
 
     // Proceed to Reset password
     public function resetPassword(Request $request)
     {
-        // Validate user input.
+        // Validate user input
         $request->validate([
-            'email' => 'required|email',
-            'reset_password_code' => 'required|integer',
+            'token' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -84,43 +99,51 @@ class PasswordController extends Controller
             ],
         ]);
 
-        // Find user by email, reset password code and expiry date.
-        $user = User::where('email', $request->email)
-            ->where('reset_password_code', $request->reset_password_code)
-            ->where('reset_password_expires_at', '>', Carbon::now())
-            ->first();
+        // Find user by hashed token and expiry date
+        $user = User::where('reset_password_token_expires_at', '>', Carbon::now())
+            ->get()
+            ->first(function ($user) use ($request) {
+                return Hash::check($request->token, $user->reset_password_token);
+            });
 
-        // If user not found, return error response.
+        // If token is invalid or expired, return error response
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired reset password code.'], 400);
+            return response()->json(['message' => 'Invalid or expired token.'], 400);
         }
 
-        // Update user password and reset password fields.
+        // Update user password and reset password fields
         $user->password = Hash::make($request->password);
+        $user->reset_password_token = null;
+        $user->reset_password_token_expires_at = null;
         $user->reset_password_code = null;
         $user->reset_password_expires_at = null;
         $user->save();
 
-        // Return success response if password reset successfully.
+        // Return success response if password reset successfully
         return response()->json(['message' => 'Password reset successfully.']);
     }
+
 
     // Change current password
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                'min:8',
-                'regex:/[a-z]/', // must contain at least one lowercase letter
-                'regex:/[A-Z]/', // must contain at least one uppercase letter
-                'regex:/[0-9]/', // must contain at least one digit
-                'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
-            ],
-        ]);
+        try {
+            $request->validate([
+                'current_password' => 'required|string',
+                'password' => [
+                    'required',
+                    'string',
+                    'confirmed',
+                    'min:8',
+                    'regex:/[a-z]/', // must contain at least one lowercase letter
+                    'regex:/[A-Z]/', // must contain at least one uppercase letter
+                    'regex:/[0-9]/', // must contain at least one digit
+                    'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        }
 
         // Get the authenticated user
         $user = Auth::user();

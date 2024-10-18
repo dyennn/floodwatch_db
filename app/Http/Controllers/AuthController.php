@@ -149,9 +149,9 @@ class AuthController extends Controller
         // Validate name, phone_number, address, 
         $fields = $request->validate([
             'name' => 'nullable|max:25|min:6|string',            
-            'phone_number' => 'nullable|numeric|digits:11|unique:users,phone_number,' . $request->user()->id,
+            'phone_number' => 'nullable|numeric|digits:10|unique:users,phone_number,' . $request->user()->id,
             'address' => 'nullable|string|max:255',
-            'gender' => 'nullable|string|in:male,female,other',
+            'gender' => 'nullable|string|in:Male,Female,Other',
         ]);
 
         // Validate email if present in the request
@@ -196,14 +196,34 @@ class AuthController extends Controller
             ]);
         }
 
-        // Update the user record
+        /*Update the user record
         $user->update([
             'name' => $fields['name'],
             'phone_number' => $fields['phone_number'],
             'address' => $fields['address'],
             'gender' => $fields['gender'],
             'updated_at' => now()
-        ]);
+        ]);*/
+
+        //Update the user record for the provided fields only
+        $updateData = [];
+        if ($request->filled('name')) {
+            $updateData['name'] = $fields['name'];
+        }
+        if ($request->filled('phone_number')) {
+            $updateData['phone_number'] = $fields['phone_number'];
+        }
+        if ($request->filled('address')) {
+            $updateData['address'] = $fields['address'];
+        }
+        if ($request->filled('gender')) {
+            $updateData['gender'] = $fields['gender'];
+        }
+    
+        if (!empty($updateData)) {
+            $updateData['updated_at'] = now();
+            $user->update($updateData);
+        }
 
         return [ // Return the updated user
             'message' => 'Profile updated successfully.',

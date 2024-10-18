@@ -39,6 +39,7 @@ class ProfileController extends Controller{
         return response()->json(['message' => 'No file uploaded'], 400);
     }
 
+    // Get the user's profile information
     public function getProfile(){
         $user = Auth::user();
         $image_url = $user->profile_image ? asset('storage/' . $user->profile_image) : null;

@@ -6,7 +6,6 @@ use App\Models\Sensor; // Ensure that the Sensor model exists in the App\Models 
 use Illuminate\Routing\Controller; // Import the Controller class
 use Illuminate\Http\Request; // Import the Request class
 
-// SensorController class to handle sensor data
 class SensorController extends Controller
 {
 
@@ -15,16 +14,16 @@ class SensorController extends Controller
         
         // Validate the incoming request data
         $validatedData = $request->validate([
-            'water_level' => 'required|numeric',
+            'waterLevel' => 'required|numeric',
             'street_name' => 'required|string',
         ]);
     
         // Create a new WaterLevel instance and save it to the database
         Sensor::create([
-            'water_level' => $validatedData['water_level'],
+            'street_name' => $validatedData['street_name'],
             'date' => now()->toDateString(),
             'time' => now()->format('H:i:s'),
-            'street_name' => $validatedData['street_name']
+            'water_level' => $validatedData['waterLevel']
         ]);
 
         // Return a success response
@@ -34,10 +33,16 @@ class SensorController extends Controller
     }
 
 
-    public function get_all_sensors()
+    public function get_all_water_level()
     {
         // Fetch all sensor data
         $sensors = Sensor::all();
+
+        // Check if there is any data
+        if ($sensors->isEmpty()) {
+            // Return a message if no data is found
+            return response()->json(['message' => 'No water level data found']);
+        }
 
         // Return the sensor data as a JSON response
         return response()->json($sensors);
