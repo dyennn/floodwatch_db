@@ -18,7 +18,7 @@ Route::apiResource('posts', PostController::class); // Provides RESTful API rout
 
 // Authentication routes
 Route::post('/register', [AuthController::class, 'register']); // User registration
-Route::post('/login', [AuthController::class, 'login']); // User login
+Route::post('/login', [AuthController::class, 'login'])->name('login'); // User login
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); // User logout
 
 // Sensor data routes
@@ -27,9 +27,9 @@ Route::get('/get-all-sensors', [SensorController::class, 'get_all_sensors']); //
 
 // Profile routes
 Route::middleware('auth:sanctum')->group(function () {
-  Route::put('/profile', [AuthController::class, 'update']); // Update user profile
+  Route::patch('/profile/update', [AuthController::class, 'update']); // Update user profile
   Route::delete('/profile', [AuthController::class, 'delete']); // Delete user profile
-  Route::get('/profile', [AuthController::class, 'show']); // Show user profile
+  Route::get('/profile/show', [AuthController::class, 'show']); // Show user profile
 });
 
 // // Password reset routes
