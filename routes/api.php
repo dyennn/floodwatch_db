@@ -28,7 +28,6 @@ Route::get('/get-all-water-level', [SensorController::class, 'get_all_water_leve
 // Profile routes
 Route::middleware('auth:sanctum')->group(function () {
   Route::patch('/profile/update', [AuthController::class, 'update']); // Update user profile
-  Route::delete('/profile', [AuthController::class, 'delete']); // Delete user profile
   Route::get('/profile/show', [AuthController::class, 'show']); // Show user profile
 });
 

@@ -55,15 +55,22 @@ class PasswordController extends Controller
             'reset_password_code' => 'required|integer',
         ]);
 
-        // Find user by email, reset password code and expiry date
-        $user = User::where('email', $request->email)
-            ->where('reset_password_code', $request->reset_password_code)
-            ->where('reset_password_expires_at', '>', Carbon::now())
-            ->first();
+        // Find user by email
+        $user = User::where('email', $request->email)->first();
 
         // If user not found, return error response
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired reset password code.'], 400);
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        // Check if the reset password code is correct
+        if ($user->reset_password_code != $request->reset_password_code) {
+            return response()->json(['message' => 'Invalid reset password code.'], 400);
+        }
+
+        // Check if the reset password code has expired
+        if (Carbon::now()->greaterThan($user->reset_password_expires_at)) {
+            return response()->json(['message' => 'Reset password code has expired.'], 400);
         }
 
         // Generate a token
@@ -84,25 +91,52 @@ class PasswordController extends Controller
     // Proceed to Reset password
     public function resetPassword(Request $request)
     {
-        // Validate user input
-        $request->validate([
-            'token' => 'required|string',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                'min:8',
-                'regex:/[a-z]/', // must contain at least one lowercase letter
-                'regex:/[A-Z]/', // must contain at least one uppercase letter
-                'regex:/[0-9]/', // must contain at least one digit
-                'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
-            ],
-        ]);
+        // Try method to catch validation errors
+        try {
+            // Validate user input
+            $request->validate([
+                'token' => 'required|string',
+                'password' => [
+                    'required',
+                    'string',
+                    'confirmed',
+                    'min:8',
+                    'regex:/[a-z]/', // must contain at least one lowercase letter
+                    'regex:/[A-Z]/', // must contain at least one uppercase letter
+                    'regex:/[0-9]/', // must contain at least one digit
+                    'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) { // Catch validation errors
+
+            // Get validation errors
+            $errors = $e->validator->errors()->toArray();
+            $response = [ // Create response
+                'message' => 'Validation failed',
+                'errors' => $errors
+            ];
+
+            // Check if password field has errors
+            if (isset($errors['password'])) { 
+                if (in_array("The password field format is invalid.", $errors['password'])) { // Check if password format is invalid
+                    $response['hint'] = 'Password must be at least 8 characters long, contain at least one uppercase letter, and one special character.';
+                }
+                if (in_array("The password field confirmation does not match.", $errors['password'])) { // Check if password confirmation does not match
+                    $response['hint'] = 'Passwords do not match.'; 
+                }
+                if (in_array("The password field is required.", $errors['password'])) { // Check if password field is provided
+                    $response['hint'] = 'Password is required.';
+                }
+            }
+             // 422 is the status code for validation errors
+            return response()->json($response, 422);
+        }
+
 
         // Find user by hashed token and expiry date
         $user = User::where('reset_password_token_expires_at', '>', Carbon::now())
-            ->get()
-            ->first(function ($user) use ($request) {
+            ->get() 
+            ->first(function ($user) use ($request) { 
                 return Hash::check($request->token, $user->reset_password_token);
             });
 
@@ -122,11 +156,12 @@ class PasswordController extends Controller
         // Return success response if password reset successfully
         return response()->json(['message' => 'Password reset successfully.']);
     }
-
+    
 
     // Change current password
     public function changePassword(Request $request)
     {
+        // Try method to catch validation errors
         try {
             $request->validate([
                 'current_password' => 'required|string',
@@ -142,7 +177,27 @@ class PasswordController extends Controller
                 ],
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            $errors = $e->validator->errors()->toArray();
+            $response = [
+                'message' => 'Validation failed',
+                'errors' => $errors
+            ];
+
+            // Check if password field has errors
+            if (isset($errors['password'])) {
+                if (in_array("The password field format is invalid.", $errors['password'])) {
+                    $response['hint'] = 'Password must be at least 8 characters long, contain at least one uppercase letter, and one special character.';
+                }
+                if (in_array("The password field confirmation does not match.", $errors['password'])) {
+                    $response['hint'] = 'Passwords do not match.';
+                }
+                if (in_array("The password field is required.", $errors['password'])) {
+                    $response['hint'] = 'Password is required.';
+                }
+            }
+
+            // 422 is the status code for validation errors
+            return response()->json($response, 422);
         }
 
         // Get the authenticated user
