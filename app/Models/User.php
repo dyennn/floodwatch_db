@@ -1,5 +1,33 @@
 <?php
 
+/**
+ * User Model
+ *
+ * This model represents a user in the application. It extends the Authenticatable class
+ * provided by Laravel and implements MustVerifyEmail and CanResetPassword interfaces.
+ * It uses several traits to provide additional functionality.
+ *
+ * Traits:
+ * - HasApiTokens: Provides API token authentication.
+ * - HasFactory: Enables the use of model factories.
+ * - Notifiable: Allows the user to receive notifications.
+ *
+ * Properties:
+ * - $fillable: An array of attributes that are mass assignable.
+ * - $hidden: An array of attributes that should be hidden for arrays.
+ *
+ * Methods:
+ * - casts(): Defines the attribute casting for the model.
+ * - profile(): Defines a one-to-one relationship with the UserProfile model.
+ * - verification(): Defines a one-to-one relationship with the UserVerification model.
+ *
+ * @package App\Models
+ * @namespace App\Models
+ * @extends Illuminate\Foundation\Auth\User
+ * @implements Illuminate\Contracts\Auth\MustVerifyEmail
+ * @implements Illuminate\Contracts\Auth\CanResetPassword
+ */
+
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -14,38 +42,17 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'phone_number',
-        'address',
-        'gender',
-        'profile_image',
-        'reset_password_token',
-        'reset_password_token_expires_at'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
-    ];  
+    ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -54,14 +61,13 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         ];
     }
 
-    /**
-     * Get the profile associated with the user.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
     public function profile()
     {
-        return $this->hasOne(Profile::class);
+        return $this->hasOne(UserProfile::class);
     }
 
+    public function verification()
+    {
+        return $this->hasOne(UserVerification::class);
+    }
 }
