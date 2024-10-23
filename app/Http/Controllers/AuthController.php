@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserProfile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -11,13 +12,21 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 // AuthController class to handle user authentication
 class AuthController extends Controller
 {
-    // Register function
-    public function register(Request $request){ 
+    /**
+     * Register a new user.
+     *
+     * @param Request $request
+     * @return array|\Illuminate\Http\JsonResponse
+     */
+    public function register(Request $request)
+    { 
         try {
+            // Validate the request fields
             $fields = $request->validate([
                 'name' => [
                     'required',
@@ -28,8 +37,7 @@ class AuthController extends Controller
                     'required',
                     'email',
                     'unique:users',
-                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com
-                    phinmaed.com|example.com)$/'
+                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com|phinmaed\.com|example\.com)$/'
                 ],
                 'password' => [
                     'required',
@@ -40,20 +48,33 @@ class AuthController extends Controller
                 ]
             ]);
 
-            $fields['password'] = Hash::make($fields['password']); // Hash the password
+            // Hash the password
+            $fields['password'] = Hash::make($fields['password']);
 
-            $user = User::create($fields); // Create new user record
+            // Create new user record
+            $user = User::create($fields);
 
-            return [ // Return the user
+            // Create a new user profile record
+            UserProfile::create([
+                'user_id' => $user->id,
+                'name' => $fields['name']
+            ]);
+
+            // Return the user and success message
+            return [
                 'user' => $user,
-                'message' => 'User registered successfully.'];
-        } catch (\Illuminate\Validation\ValidationException $e) { // Catch validation errors
+                'message' => 'User registered successfully.'
+            ];
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Catch validation errors
             $errors = $e->validator->errors()->toArray();
             $response = [
                 'message' => 'Validation failed',
                 'errors' => $errors
             ];
-            if (isset($errors['name'])) { // Shows a hint if the name validation fails
+
+            // Provide hints for name validation errors
+            if (isset($errors['name'])) {
                 if (in_array("The name field is required.", $errors['name'])) {
                     $response['hint'] = 'Username field is required';
                 }
@@ -65,7 +86,8 @@ class AuthController extends Controller
                 }
             }
 
-            if (isset($errors['email'])) { // Shows a hint if the email validation fails
+            // Provide hints for email validation errors
+            if (isset($errors['email'])) {
                 if (in_array('The email has already been taken.', $errors['email'])) {
                     $response['hint'] = 'The email address is already registered.';
                 }
@@ -77,175 +99,146 @@ class AuthController extends Controller
                 }
             }
 
-            if (isset($errors['password'])) { // Shows a hint if the password validation fails
+            // Provide hints for password validation errors
+            if (isset($errors['password'])) {
                 if (in_array("The password field format is invalid.", $errors['password'])) {
-                $response['hint'] = 'Password must be at least 8 characters long, contain at least one uppercase letter, and one special character.';
+                    $response['hint'] = 'Password must be at least 8 characters long, contain at least one uppercase letter, and one special character.';
                 }
                 if (in_array("The password field confirmation does not match.", $errors['password'])) {
-                $response['hint'] = 'Passwords do not match.';
+                    $response['hint'] = 'Passwords do not match.';
                 }
                 if (in_array("The password field is required.", $errors['password'])) {
                     $response['hint'] = 'Password is required.';
                 }
             }   
 
+            // Return validation error response
             return response()->json($response, 422); 
         }
     }
 
-    // Login function
-    public function login(Request $request){ // Login function
-        try{ 
+    /**
+     * Login a user.
+     *
+     * @param Request $request
+     * @return array|\Illuminate\Http\JsonResponse
+     */
+    public function login(Request $request)
+    { 
+        try { 
+            // Validate the request fields
             $request->validate([
-                'email' => ['required', 'email','exists:users'], 
+                'email' => ['required', 'email', 'exists:users'], 
                 'password' => ['required']
             ]);
 
-            $user = User::where('email', $request->email)->first(); // Find the user by email
+            // Find the user by email
+            $user = User::where('email', $request->email)->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)){ // Check if password is correct
+            // Check if password is correct
+            if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'hint' => 'The Password provided is incorrect.'
-                ],422);
+                ], 422);
             }
 
+            // Create a new token for the user
             $token = $user->createToken($user->name);
 
+            // Format the dates
+            $formattedUser = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'created_at' => Carbon::parse($user->created_at)->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::parse($user->updated_at)->format('Y-m-d H:i:s'),
+            ];
+
+            // Return the user and token
             return [
-                'user' => $user,
+                'user' => $formattedUser,
                 'token' => $token->plainTextToken
             ];
         } catch (\Illuminate\Validation\ValidationException $e) {
+            // Catch validation errors
             $errors = $e->validator->errors()->toArray();
             $response = [
                 'message' => 'Invalid credentials',
                 'errors' => $errors
             ];
-            if (isset($errors['email'])) { // Shows hint if the email is incorrect or not registered
+
+            // Provide hint if the email is incorrect or not registered
+            if (isset($errors['email'])) {
                 $response['hint'] = 'This Email is incorrect or not registered.';
             }
+
+            // Return validation error response
             return response()->json($response, 422); 
         }
     }
+    /**
+     * Logout the authenticated user.
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function logout(Request $request)
+    {
+        // Check if the user is authenticated
+        if (!$request->user()) {
+            return response()->json([
+                'message' => 'Authorization token not found.'
+            ], 401);
+        }
 
-    // Logout function
-    public function logout(Request $request){
+        // Delete all tokens for the authenticated user
         $request->user()->tokens()->delete();
         
-        return [
+        // Return logout message
+        return response()->json([
             'message' => 'You are logged out.'
-        ];
-    }
-
-    // Get authenticated user
-    public function profile(Request $request){ 
-        return $request->user(); 
-    }
-
-    // Update user profile function
-    public function update(Request $request){ 
-        $user = Auth::user(); // Get the authenticated user
-
-        // Validate name, phone_number, address, 
-        $fields = $request->validate([
-            'name' => 'nullable|max:25|min:6|string',            
-            'phone_number' => 'nullable|numeric|digits:10|unique:users,phone_number,' . $request->user()->id,
-            'address' => 'nullable|string|max:255',
-            'gender' => 'nullable|string|in:Male,Female,Other',
         ]);
-
-        // Validate email if present in the request
-        if ($request->has('email')) {
-            $request->validate([
-                'email' => [
-                    'required',
-                    'email',
-                    'unique:users,email,' . $user->id,
-                    'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|aol\.com|phinmaed\.com|example.com)$/'
-                ]
-            ]);
-
-            // Update the user email
-            $user->update([
-                'email' => $request->input('email')
-            ]);
-        }
-
-        // Validate password if present in the request
-        if ($request->has('current_password') && $request->has('password') && $request->has('password_confirmation')) {
-            $request->validate([
-                'current_password' => 'required|string|min:8',
-                'password' => [
-                    'required',
-                    'string',
-                    'min:8',
-                    'confirmed',
-                    'regex:/[A-Z]/', // must contain at least one uppercase letter
-                    'regex:/[!@#$%^&*(),.?":{}|<>-_]/' // must contain at least one special character
-                ]
-            ]);
-
-            // Check if the current password matches
-            if (!Hash::check($request->input('current_password'), $user->password)) {
-                return response()->json(['message' => 'Current password is incorrect'], 400);
-            }
-
-            // Update the user password
-            $user->update([
-                'password' => Hash::make($request->input('password'))
-            ]);
-        }
-
-        /*Update the user record
-        $user->update([
-            'name' => $fields['name'],
-            'phone_number' => $fields['phone_number'],
-            'address' => $fields['address'],
-            'gender' => $fields['gender'],
-            'updated_at' => now()
-        ]);*/
-
-        //Update the user record for the provided fields only
-        $updateData = [];
-        if ($request->filled('name')) {
-            $updateData['name'] = $fields['name'];
-        }
-        if ($request->filled('phone_number')) {
-            $updateData['phone_number'] = $fields['phone_number'];
-        }
-        if ($request->filled('address')) {
-            $updateData['address'] = $fields['address'];
-        }
-        if ($request->filled('gender')) {
-            $updateData['gender'] = $fields['gender'];
-        }
-    
-        if (!empty($updateData)) {
-            $updateData['updated_at'] = now();
-            $user->update($updateData);
-        }
-
-        return [ // Return the updated user
-            'message' => 'Profile updated successfully.',
-            'user' => $user,
-
-        ];
     }
 
-    // Delete user account
-    public function delete(Request $request){ 
-        $user = $request->user(); // Get the authenticated user
-        $user->delete(); // Delete the user record
+    /**
+     * Get the authenticated user's profile.
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function profile(Request $request)
+    { 
+        // Get the authenticated user
+        $user = $request->user();
 
+        // Get the user's profile
+        $profile = UserProfile::where('user_id', $user->id)->first();
+
+        // Return the user and profile
         return [
-            'message' => 'User account deleted successfully.'
+            'user' => $user,
+            'profile' => $profile
         ];
     }
 
-    // Shows user information
-    public function show(Request $request){
-        $user = $request->user(); // Get the authenticated user
+    /**
+     * Show the authenticated user's information.
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function show(Request $request)
+    {
+        // Get the authenticated user
+        $user = $request->user();
 
-        return $user;
+        // Get the user's profile
+        $profile = UserProfile::where('user_id', $user->id)->first();
+
+        // Return the user and profile
+        return [
+            'user' => $user,
+            'profile' => $profile
+        ];
     }
 }
